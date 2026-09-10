@@ -40,14 +40,26 @@ bot.on('chat', (username, message) => {
 })
 
 bot.on('kicked', (reason) => {
-  console.log('Kicked:', reason)
+  console.log('Kicked, raw reason:', JSON.stringify(reason))
   process.exit(0)
 })
 
-bot.on('error', (err) => console.log('Error:', err.message))
-bot.on('end', () => {
-  console.log('Disconnected.')
+bot.on('error', (err) => {
+  console.log('Error:', err.message)
+  console.log('Full error:', err.stack)
+})
+
+bot.on('end', (reason) => {
+  console.log('Disconnected. Reason given:', reason || '(none provided)')
   process.exit(0)
+})
+
+// Extra diagnostics: log every raw packet the server sends before disconnecting,
+// so we can see exactly what happened even if no clean reason is given.
+bot._client.on('packet', (data, meta) => {
+  if (meta.name === 'kick_disconnect' || meta.name === 'disconnect') {
+    console.log('Raw disconnect packet:', JSON.stringify(data))
+  }
 })
 
 // Safety valve: if GitHub is about to kill the job (6h hard cap),
